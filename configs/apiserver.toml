@@ -1,2 +1,5 @@
 bind_addr = ":8080"
 log_level = "debug"
+
+[store]
+database_url = "host=db port=5432 username=admin password=root dbname=db sslmode=disable"
