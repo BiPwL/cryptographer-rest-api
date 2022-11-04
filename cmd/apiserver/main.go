@@ -13,7 +13,7 @@ var (
 )
 
 func init() {
-	flag.StringVar(&configPath, "config-path", "configs/apiserver.toml", "path to config file")
+	flag.StringVar(&configPath, "config-path", "/home/bipwl/code/github.com/BiPwL/cryptographer-rest-api/configs/apiserver.toml", "path to config file")
 }
 
 func main() {
