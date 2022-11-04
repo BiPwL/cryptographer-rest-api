@@ -13,16 +13,3 @@ services:
       - POSTGRES_PASSWORD=root
       - POSTGRES_USER=admin
     image: postgres:latest
-
-  db_test:
-    restart: always
-    volumes:
-      - ./.database/postgres/data:/var/lib/postgresql/data
-    container_name: db_test
-    ports:
-      - 5436:5432
-    environment:
-      - POSTGRES_DB=db
-      - POSTGRES_PASSWORD=root
-      - POSTGRES_USER=admin
-    image: postgres:latest
