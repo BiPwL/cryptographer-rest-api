@@ -11,5 +11,9 @@ test:
 # migrations
 
 # curl -X POST -H "Content-Type: application/json" \
--d "{\"email\": \"user@example.org\", \"password\": \"password\"}" -i http://localhost:8080/users
+-d "{\"email\": \"user@example.org\", \"password\": \"password\"}" -b http://localhost:8080/users
 # the curl sould look somthing like this
+
+# for save cookie use -c and path, and for use cookie use -b and path
+
+# for set browser(header) use -H "Origin: google.com" for example
