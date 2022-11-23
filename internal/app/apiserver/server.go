@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/BiPwL/cryptographer-rest-api/internal/app/cryptographer"
 	"github.com/BiPwL/cryptographer-rest-api/internal/app/model"
 	"github.com/BiPwL/cryptographer-rest-api/internal/app/store"
 	"github.com/google/uuid"
@@ -25,6 +26,7 @@ const (
 var (
 	errIncorrectEmailOrPassword = errors.New("incorrect email or password")
 	errNotAuthenticated = errors.New("not authenticated")
+	errInvalidKeySize = errors.New("the key must be 16, 24 or 32 characters long")
 )
 
 type ctxKey  int8
@@ -63,6 +65,8 @@ func (s *server) configureRouter() {
 	private := s.router.PathPrefix("/private").Subrouter()
 	private.Use(s.authenticateUser)
 	private.HandleFunc("/whoami", s.handleWhoami()).Methods("GET")
+	private.HandleFunc("/encrypt", s.handleEncrypt()).Methods("POST")
+	private.HandleFunc("/decrypt", s.handleDecrypt()).Methods("POST")
 }
 
 func (s *server) setRequestID(next http.Handler) http.Handler {
@@ -116,6 +120,72 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ctxKeyUser, u)))
 	})
+}
+
+func (s *server) handleDecrypt() http.HandlerFunc {
+	type request struct {
+		Text string `json:"text"`
+		Key string `json:"key"`
+	}
+	
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		bytes := []byte(r.Context().Value(ctxKeyUser).(*model.User).Email)[:16]
+		decText, err := cryptographer.Decrypt(req.Text, req.Key, bytes)
+		if err != nil {
+			lb := len(req.Key)
+			switch lb {
+			case 16, 24, 32:
+				break
+			default:
+				s.respond(w, r, http.StatusBadRequest, errInvalidKeySize)
+				return
+			}
+			s.respond(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		p := make(map[string]string)
+		p["text"] = decText
+		s.respond(w, r, http.StatusOK, p)
+	}
+}
+
+func (s *server) handleEncrypt() http.HandlerFunc {
+	type request struct {
+		Text string `json:"text"`
+		Key string `json:"key"`
+	}
+	
+	return func(w http.ResponseWriter, r *http.Request) {
+		req := &request{}
+		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
+			s.error(w, r, http.StatusBadRequest, err)
+			return
+		}
+		bytes := []byte(r.Context().Value(ctxKeyUser).(*model.User).Email)[:16]
+		encText, err := cryptographer.Encrypt(req.Text, req.Key, bytes)
+		if err != nil {
+			lk := len(req.Key)
+			switch lk {
+			case 16, 24, 32:
+				break
+			default:
+				s.respond(w, r, http.StatusBadRequest, errInvalidKeySize)
+				return
+			}
+			s.respond(w, r, http.StatusInternalServerError, err)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		p := make(map[string]string)
+		p["text"] = encText
+		s.respond(w, r, http.StatusOK, p)
+	}
 }
 
  func (s *server) handleWhoami() http.HandlerFunc {
