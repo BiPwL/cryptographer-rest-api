@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestDB(t *testing.T, databaseURL string) (*sql.DB, func(... string)) {
+func TestDB(t *testing.T, databaseURL string) (*sql.DB, func(...string)) {
 	t.Helper()
 
 	db, err := sql.Open("postgres", databaseURL)

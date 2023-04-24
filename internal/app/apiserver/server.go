@@ -18,31 +18,31 @@ import (
 )
 
 const (
-	sessionName = "cryptographerapi"
-	ctxKeyUser ctxKey = iota
+	sessionName        = "cryptographerapi"
+	ctxKeyUser  ctxKey = iota
 	ctxKeyRequestID
 )
 
 var (
 	errIncorrectEmailOrPassword = errors.New("incorrect email or password")
-	errNotAuthenticated = errors.New("not authenticated")
-	errInvalidKeySize = errors.New("the key must be 16, 24 or 32 characters long")
+	errNotAuthenticated         = errors.New("not authenticated")
+	errInvalidKeySize           = errors.New("the key must be 16, 24 or 32 characters long")
 )
 
-type ctxKey  int8
+type ctxKey int8
 
 type server struct {
-	router *mux.Router
-	logger *logrus.Logger
-	store store.Store
+	router       *mux.Router
+	logger       *logrus.Logger
+	store        store.Store
 	sessionStore sessions.Store
 }
 
 func newServer(store store.Store, sessionStore sessions.Store) *server {
 	s := &server{
-		router: mux.NewRouter(),
-		logger: logrus.New(),
-		store: store,
+		router:       mux.NewRouter(),
+		logger:       logrus.New(),
+		store:        store,
 		sessionStore: sessionStore,
 	}
 
@@ -81,16 +81,16 @@ func (s *server) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		logger := s.logger.WithFields(logrus.Fields{
 			"remote_addr": r.RemoteAddr,
-			"request_id": r.Context().Value(ctxKeyRequestID),
+			"request_id":  r.Context().Value(ctxKeyRequestID),
 		})
 		logger.Infof("started %s %s", r.Method, r.RequestURI)
 
 		start := time.Now()
 		rw := &ResponseWriter{w, http.StatusOK}
 		next.ServeHTTP(rw, r)
-		
+
 		logger.Infof(
-			"complited with %d %s in %v", 
+			"complited with %d %s in %v",
 			rw.code,
 			http.StatusText(rw.code),
 			time.Since(start),
@@ -111,7 +111,7 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
 			return
 		}
-		 
+
 		u, err := s.store.User().Find(id.(int))
 		if err != nil {
 			s.error(w, r, http.StatusUnauthorized, errNotAuthenticated)
@@ -125,9 +125,9 @@ func (s *server) authenticateUser(next http.Handler) http.Handler {
 func (s *server) handleDecrypt() http.HandlerFunc {
 	type request struct {
 		Text string `json:"text"`
-		Key string `json:"key"`
+		Key  string `json:"key"`
 	}
-	
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -158,9 +158,9 @@ func (s *server) handleDecrypt() http.HandlerFunc {
 func (s *server) handleEncrypt() http.HandlerFunc {
 	type request struct {
 		Text string `json:"text"`
-		Key string `json:"key"`
+		Key  string `json:"key"`
 	}
-	
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -188,15 +188,15 @@ func (s *server) handleEncrypt() http.HandlerFunc {
 	}
 }
 
- func (s *server) handleWhoami() http.HandlerFunc {
+func (s *server) handleWhoami() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		s.respond(w, r, http.StatusOK, r.Context().Value(ctxKeyUser).(*model.User))
 	}
- }
+}
 
 func (s *server) handleUsersCreate() http.HandlerFunc {
 	type request struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
 
@@ -208,7 +208,7 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 		}
 
 		u := &model.User{
-			Email: req.Email,
+			Email:    req.Email,
 			Password: req.Password,
 		}
 		if err := s.store.User().Create(u); err != nil {
@@ -223,10 +223,10 @@ func (s *server) handleUsersCreate() http.HandlerFunc {
 
 func (s *server) handleSessionsCreate() http.HandlerFunc {
 	type request struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
-	
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		req := &request{}
 		if err := json.NewDecoder(r.Body).Decode(req); err != nil {
@@ -235,7 +235,7 @@ func (s *server) handleSessionsCreate() http.HandlerFunc {
 		}
 
 		u, err := s.store.User().FindByEmail(req.Email)
-		if err != nil || !u.ComparePassword(req.Password){
+		if err != nil || !u.ComparePassword(req.Password) {
 			s.error(w, r, http.StatusUnauthorized, errIncorrectEmailOrPassword)
 			return
 		}

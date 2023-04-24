@@ -3,7 +3,7 @@ package apiserver
 import "net/http"
 
 type ResponseWriter struct {
-	http.ResponseWriter 
+	http.ResponseWriter
 	code int
 }
 
