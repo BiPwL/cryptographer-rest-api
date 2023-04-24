@@ -8,9 +8,9 @@ import (
 )
 
 func TestUser_Validate(t *testing.T) {
-	testCases := []struct{
-		name string
-		u func() *model.User
+	testCases := []struct {
+		name    string
+		u       func() *model.User
 		isValid bool
 	}{
 		{

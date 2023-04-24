@@ -21,7 +21,7 @@ func (r *UserRepository) Create(u *model.User) error {
 
 	u.ID = len(r.users) + 1
 	r.users[u.ID] = u
-	
+
 	return nil
 }
 
